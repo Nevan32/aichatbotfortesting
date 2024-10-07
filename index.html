@@ -1,5 +1,6 @@
-<!DOCTYPE html>  
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -85,9 +86,12 @@
 
         <div class="chat-container mb-4">
             <div class="chat chat-start" v-for="(message, index) in messages" :key="index" :class="['chat-bubble', message.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary']">
-                <div class="message-role">{{ message.role === 'user' ? 'User' : 'Assistant' }}</div>
+                <div class="flex items-center mb-2">
+                    <img :src="message.role === 'user' ? 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png' : 'https://upload.wikimedia.org/wikipedia/commons/e/ef/ChatGPT-Logo.svg'" alt="User or Assistant Icon" class="w-8 h-8 mr-2">
+                    <div class="message-role">{{ message.role === 'user' ? 'User' : 'Assistant' }}</div>
+                </div>
                 <div class="message-content" v-html="formatMessageContent(message.content)"></div>
-                
+
                 <!-- Tombol untuk menyalin pesan -->
                 <button @click="copyToClipboard(message.content)" class="btn bg-blue-500 hover:bg-blue-700 text-white mt-2">SALIN PESAN INI</button>
             </div>
@@ -122,7 +126,7 @@
                         this.typing = true;
 
                         if (this.firstInteraction) {
-                            const welcomeMessage = "Halo Selamat Datang di website ChatGPT versi buatan Raya, Website Ai ini diciptakan oleh Raya Fadilla Azhar, Jika terjadi bug atau ada saran & pertanyaan silahkan Pencet Tombol 'LAPORKAN BUG/SARAN/PERTANYAAN DISINI'. Terima kasih, selamat menggunakan website ai ini ya.";
+                            const welcomeMessage = "Halo Selamat Datang di website ChatGPT versi buatan Raya, Website Ai ini diciptakan oleh Raya Fadilla Azhar, Jika terjadi bug atau ada saran & pertanyaan silahkan Pencet Tombol 'LAPORKAN BUG/SARAN/PERTANYAAN DISINI' atau WhatsApp saya kalau anda punya nomor saya. Terima kasih, selamat menggunakan website ai ini ya.";
                             this.messages.push({ role: "assistant", content: welcomeMessage });
                             this.firstInteraction = false;
                             this.typing = false;
@@ -196,4 +200,5 @@
         }
     </script>
 </body>
+
 </html>
