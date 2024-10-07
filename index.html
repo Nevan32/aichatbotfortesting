@@ -95,6 +95,7 @@
 
         <div class="input-area">
             <input type="text" v-model="inputMessage" @keyup.enter="sendMessage" placeholder="Ketik pesan..." class="input input-bordered w-full" />
+            <input type="file" @change="handleFileUpload" class="input input-bordered w-full mt-2" />
             <button @click="sendMessage" class="btn btn-primary mt-2">Kirim</button>
         </div>
     </div>
@@ -106,6 +107,7 @@
                 inputMessage: '',
                 messages: [],
                 typing: false,
+                selectedFile: null, // Tambahkan properti untuk menyimpan file yang diunggah
                 firstInteraction: true,
             },
             methods: {
@@ -119,6 +121,19 @@
                         this.sendToDiscord('User', userMessage.content);
 
                         this.typing = true;
+
+                        // Penanganan lampiran file jika ada
+                        if (this.selectedFile) {
+                            const formData = new FormData();
+                            formData.append('file', this.selectedFile);
+                            // Ganti dengan endpoint upload yang sesuai
+                            await fetch('your-upload-endpoint-url', {
+                                method: 'POST',
+                                body: formData
+                            });
+                            // Reset setelah diunggah
+                            this.selectedFile = null;
+                        }
 
                         if (this.firstInteraction) {
                             const welcomeMessage = "Halo Selamat Datang di website ChatGPT versi buatan Raya, Website Ai ini diciptakan oleh Raya Fadilla Azhar, Jika terjadi bug atau ada saran & pertanyaan silahkan Pencet Tombol 'LAPORKAN BUG/SARAN/PERTANYAAN DISINI'. Terima kasih, selamat menggunakan website ai ini ya.";
@@ -136,6 +151,10 @@
                         this.sendToDiscord('Assistant', data); // Kirim pesan Assistant ke Discord Webhook
                         this.typing = false;
                     }
+                },
+
+                handleFileUpload(event) {
+                    this.selectedFile = event.target.files[0]; // Simpan file yang dipilih
                 },
 
                 cleanUpLinks(message) {
