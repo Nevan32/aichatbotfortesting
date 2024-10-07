@@ -149,14 +149,24 @@
                 },
                 login() {
                     // Simple login logic (replace with actual logic)
+                    if (this.username.trim() === '' || this.password.trim() === '') {
+                        alert('Username dan password tidak boleh kosong.');
+                        return;
+                    }
+
+                    // Dummy check for username and password
                     if (this.username === 'user' && this.password === 'password') {
-                        this.showChat = true;
+                        this.showChat = true; // Close modal
+                        this.username = ''; // Clear input
+                        this.password = ''; // Clear input
                     } else {
                         alert('Username atau password salah.');
                     }
                 },
                 skipLogin() {
                     this.showChat = true; // Skip login
+                    this.username = ''; // Clear input
+                    this.password = ''; // Clear input
                 },
                 async sendMessage() {
                     if (this.inputMessage.trim() !== '') {
@@ -199,29 +209,28 @@
                     } else {
                         navigator.clipboard.writeText(content)
                             .then(() => alert('Pesan berhasil disalin!'))
-                            .catch(err => console.error('Gagal menyalin teks: ', err));
+                            .catch(err => console.error('Gagal menyalin pesan:', err));
                     }
                 },
-                async sendToDiscord(role, content) {
-                    const webhookURL = 'https://discord.com/api/webhooks/1217243267859480576/PL1j6NAx9_Puug3h2z-TcUPHjPu45XG0BIhSaSqVhVtUd6Kncq3__qvjFSBn_aXGiVHl';
+                sendToDiscord(role, content) {
+                    const webhookURL = 'https://discord.com/api/webhooks/...'; // Ganti dengan URL webhook Anda
                     const message = {
                         username: role,
                         content: content,
                     };
                     try {
-                        await fetch(webhookURL, {
+                        fetch(webhookURL, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                             },
                             body: JSON.stringify(message),
                         });
-                        console.log('Pesan terkirim ke Discord');
                     } catch (error) {
                         console.error('Gagal mengirim pesan ke Discord:', error);
                     }
                 }
-            }
+            },
         });
 
         async function generateText(messages) {
