@@ -1,437 +1,60 @@
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>AI Chatbot Sederhana</title>
-
+    <title>AI Chatbot Sederhana dengan Login</title>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@3.9.4/dist/full.css" rel="stylesheet" type="text/css" />
-
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
-
     <script src="https://cdn.tailwindcss.com"></script>
 
-
-
     <style>
-
-        body {
-
-            background-color: #f8fafc;
-
-            font-family: 'Arial', sans-serif;
-
-            margin: 0;
-
-            height: 100vh;
-
-            display: flex;
-
-            flex-direction: column;
-
-        }
-
-        .chat-container {
-
-            background: white;
-
-            border-radius: 10px;
-
-            padding: 20px;
-
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-
-            flex: 1;
-
-            overflow-y: auto;
-
-            margin-bottom: 20px;
-
-        }
-
-        .input-area {
-
-            margin-top: 20px;
-
-        }
-
-        .chat-bubble {
-
-            margin-bottom: 10px;
-
-            padding: 10px;
-
-            border-radius: 10px;
-
-        }
-
-        .chat-bubble-primary {
-
-            background-color: transparent;
-
-            color: black;
-
-        }
-
-        .chat-bubble-secondary {
-
-            background-color: transparent;
-
-            color: black;
-
-        }
-
-        .copy-button {
-
-            color: blue;
-
-            text-decoration: none;
-
-            cursor: pointer;
-
-        }
-
-        .copy-button:hover {
-
-            text-decoration: underline;
-
-        }
-
-        .message-content p {
-
-            margin-bottom: 0.5em;
-
-        }
-
-        .message-content ul {
-
-            margin-left: 20px;
-
-        }
-
-        .message-role {
-
-            font-weight: bold;
-
-            margin-bottom: 5px;
-
-        }
-
-        .modal {
-
-            position: fixed;
-
-            top: 0;
-
-            left: 0;
-
-            width: 100%;
-
-            height: 100%;
-
-            background: rgba(0, 0, 0, 0.5);
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            visibility: hidden;
-
-            opacity: 0;
-
-            transition: visibility 0s, opacity 0.5s ease;
-
-        }
-
-        .modal.active {
-
-            visibility: visible;
-
-            opacity: 1;
-
-        }
-
-        .modal-content {
-
-            background: white;
-
-            padding: 20px;
-
-            border-radius: 10px;
-
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-
-        }
-
+        /* ... styles ... */
     </style>
-
 </head>
 
-
-
 <body>
-
     <div id="app" class="container mx-auto p-4 flex flex-col h-full">
-
-        <h1 class="text-3xl font-bold mb-4 text-center">AI Chatbot Sederhana</h1>
-
-        <div class="text-center mb-4">
-
-            <a href="https://nevan32.github.io/chatbotforlaporanbugorsaran.github.io/" target="_blank">
-
-                <button class="btn bg-green-500 hover:bg-green-700 text-white">Laporkan Bug/Saran/Pertanyaan Disini</button>
-
-            </a>
-
+        <div v-if="!isLoggedIn" class="login-container">
+            <h2>Login</h2>
+            <input type="text" v-model="username" placeholder="Username" class="login-input">
+            <input type="password" v-model="password" placeholder="Password" class="login-input">
+            <button @click="login" class="btn bg-green-500 hover:bg-green-700 text-white">Login</button>
+            <p>Belum punya akun? <a href="#">Daftar</a></p>
         </div>
 
-
-
-        <!-- Chat Container -->
-
-        <div class="chat-container mb-4" v-if="showChat">
-
-            <div class="chat chat-start" v-for="(message, index) in messages" :key="index" :class="['chat-bubble', message.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary']">
-
-                <div class="flex items-center mb-2">
-
-                    <img :src="message.role === 'user' ? 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png' : 'https://upload.wikimedia.org/wikipedia/commons/e/ef/ChatGPT-Logo.svg'" alt="User or Assistant Icon" class="w-8 h-8 mr-2">
-
-                    <div class="message-role">{{ message.role === 'user' ? 'User' : 'Assistant' }}</div>
-
-                </div>
-
-                <div class="message-content" v-html="formatMessageContent(message.content)"></div>
-
-                <button @click="copyToClipboard(message.content)" class="btn bg-blue-500 hover:bg-blue-700 text-white mt-2">SALIN PESAN INI</button>
-
+        <div v-else class="chat-container">
             </div>
 
-            <div v-if="typing" class="text-gray-500 italic">assistant sedang mengetik...</div>
-
-        </div>
-
-
-
-        <!-- Input Area -->
-
-        <div class="input-area" v-if="showChat">
-
-            <input type="text" v-model="inputMessage" @keyup.enter="sendMessage" placeholder="Ketik pesan..." class="input input-bordered w-full" />
-
-            <button @click="sendMessage" class="btn btn-primary mt-2">Kirim</button>
-
-        </div>
-
-
-
-        <!-- Login Modal -->
-
-        <div :class="['modal', { active: !showChat }]" @click="handleModalClick">
-
-            <div class="modal-content" @click.stop><!-- Add @click.stop to prevent closing modal when clicking inside the modal -->
-
-                <h2 class="text-xl font-bold mb-4">Apakah Anda ingin login ke akun Anda? Jika iya, silahkan masukkan nama dan password. Anda boleh skip login ini jika Anda tidak punya akun.</h2>
-
-                <input type="text" v-model="username" placeholder="Username" class="input input-bordered w-full mb-2" />
-
-                <input type="password" v-model="password" placeholder="Password" class="input input-bordered w-full mb-4" />
-
-                <div class="flex justify-between">
-
-                    <button @click="login" class="btn bg-blue-500 hover:bg-blue-700 text-white">Login</button>
-
-                    <button @click="skipLogin" class="btn bg-gray-500 hover:bg-gray-700 text-white">Skip Login</button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-
-
-    <script type="module">
-
-        new Vue({
-
-            el: '#app',
-
-            data: {
-
-                inputMessage: '',
-
-                messages: [],
-
-                typing: false,
-
-                firstInteraction: true,
-
-                showChat: false,
-
-                username: '',
-
-                password: '',
-
-            },
-
-            methods: {
-
-                handleModalClick(event) {
-
-                    if (event.target === event.currentTarget) {
-
-                        this.showChat = false; // Close modal on outside click
-
+        <script type="module">
+            new Vue({
+                el: '#app',
+                data() {
+                    return {
+                        username: '',
+                        password: '',
+                        isLoggedIn: false,
+                        accounts: [
+                            { username: 'Nevan', password: '12345' }
+                        ],
+                        // ... data lainnya ...
                     }
-
                 },
-
-                login() {
-
-                    if (this.username.trim() === '' || this.password.trim() === '') {
-
-                        alert('Username dan password tidak boleh kosong.');
-
-                        return;
-
-                    }
-
-                    if (this.username === 'user' && this.password === 'password') {
-
-                        this.showChat = true; // Tutup modal
-
-                        this.username = ''; // Kosongkan input
-
-                        this.password = ''; // Kosongkan input
-
-                    } else {
-
-                        alert('Username atau password salah.');
-
-                    }
-
-                },
-
-                skipLogin() {
-
-                    this.showChat = true; // Skip login
-
-                    this.username = ''; // Kosongkan input
-
-                    this.password = ''; // Kosongkan input
-
-                },
-
-                async sendMessage() {
-
-                    if (this.inputMessage.trim() !== '') {
-
-                        const userMessage = { role: "user", content: this.cleanUpLinks(this.inputMessage) };
-
-                        this.messages.push(userMessage);
-
-                        this.inputMessage = '';
-
-                        this.typing = true;
-
-
-
-                        if (this.firstInteraction) {
-
-                            const welcomeMessage = "Halo Selamat Datang di website ChatGPT versi buatan Raya. Jika terjadi bug atau ada saran, silahkan Pencet Tombol 'LAPORKAN BUG/SARAN/PERTANYAAN DISINI'. Terima kasih, selamat menggunakan website ini.";
-
-                            this.messages.push({ role: "assistant", content: welcomeMessage });
-
-                            this.firstInteraction = false;
-
-                            this.typing = false;
-
-                            this.sendToDiscord('Assistant', welcomeMessage);
-
-                            return;
-
+                methods: {
+                    login() {
+                        const foundUser = this.accounts.find(user => user.username === this.username && user.password === this.password);
+                        if (foundUser) {
+                            this.isLoggedIn = true;
+                        } else {
+                            alert('Username atau password salah');
                         }
-
-
-
-                        const data = await generateText(this.messages);
-
-                        this.typing = false;
-
-                        this.messages.push({ role: "assistant", content: this.cleanUpLinks(data) });
-
-                        this.sendToDiscord('Assistant', data);
-
-                        this.typing = false;
-
-                    }
-
-                },
-
-                cleanUpLinks(message) {
-
-                    return message.replace(/(https?:\/\/[^\s]+)\s+/g, '$1').replace(/\s+(com|org|net|id|co)/g, '$1');
-
-                },
-
-                formatMessageContent(content) {
-
-                    return content.replace(/\n/g, '<br>').replace(/(\d\.\s)/g, '<ul><li>$1</li></ul>');
-
-                },
-
-                copyToClipboard(content) {
-
-                    if (!navigator.clipboard) {
-
-                        const el = document.createElement('textarea');
-
-                        el.value = content;
-
-                        document.body.appendChild(el);
-
-                        el.select();
-
-                        document.execCommand('copy');
-
-                        document.body.removeChild(el);
-
-                        alert('Pesan berhasil disalin menggunakan metode fallback!');
-
-                    } else {
-
-                        navigator.clipboard.writeText(content)
-
-                            .then(() => alert('Pesan berhasil disalin!'))
-
-                            .catch(err => console.error('Gagal menyalin pesan:', err));
-
-                    }
-
-                },
-
-                sendToDiscord(role, content) {
-
-                    // Logika untuk mengirim pesan ke Discord di sini (gunakan webhook atau API lain)
-
+                    },
+                    // ... metode lainnya ...
                 }
-
-            }
-
-        });
-
-    </script>
-
+            });
+        </script>
+    </div>
 </body>
 
 </html>
