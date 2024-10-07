@@ -42,6 +42,7 @@
         .message-container.user {
             justify-content: flex-end;
             flex-direction: row-reverse;
+            text-align: right;
         }
 
         .message-container.assistant {
@@ -62,6 +63,8 @@
         /* Set user background color to assistant's previous color */
         .message-container.user .message-content {
             background-color: #f1f1f1;
+            float: right;
+            text-align: right;
         }
 
         .message-role {
@@ -78,6 +81,7 @@
         .message-container.user .message-icon {
             margin-left: 10px;
             margin-right: 0;
+            float: right;
         }
 
         .message-container.assistant .message-icon {
@@ -227,7 +231,8 @@
 
             const response = await hf.chatCompletion({
                 model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
-                messages: messages,
+            
+    messages: messages,
                 max_tokens: 500,
                 temperature: 0.3,
                 seed: 0,
