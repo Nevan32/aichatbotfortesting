@@ -134,16 +134,18 @@
                 <h2 class="text-lg font-bold">Daftar History Chat</h2>
             </div>
             <div class="drawer-content">
-                <!-- Tombol untuk buat chat baru -->
-                <div class="new-chat-button" @click="createNewChat">+ New Chat</div>
-
                 <ul>
                     <li v-for="(history, index) in savedChats" :key="index" @click="loadChat(history.name)" class="cursor-pointer hover:bg-gray-200 p-2">
                         {{ history.name }}
                     </li>
                 </ul>
-                <input type="text" v-model="newHistoryName" placeholder="Nama history baru" class="input input-bordered w-full mt-4" />
-                <button @click="saveNewHistory" class="btn btn-primary mt-2 w-full">Simpan Chat Ini</button>
+
+                <!-- Tombol untuk buat chat baru dan menyimpan chat ini hanya muncul saat drawer terbuka -->
+                <div v-if="isDrawerOpen">
+                    <div class="new-chat-button" @click="createNewChat">+ New Chat</div>
+                    <input type="text" v-model="newHistoryName" placeholder="Nama history baru" class="input input-bordered w-full mt-4" />
+                    <button @click="saveNewHistory" class="btn btn-primary mt-2 w-full">Simpan Chat Ini</button>
+                </div>
             </div>
         </div>
 
@@ -249,11 +251,10 @@
                         const userMessage = { role: "user", content: this.cleanUpLinks(this.inputMessage) };
                         this.inputMessage = '';
                         this.messages.push(userMessage);
-
                         this.typing = true;
 
                         if (this.firstInteraction) {
-                            const welcomeMessage = "Halo Selamat Datang...";
+                            const welcomeMessage = "Halo Selamat Datang di website ChatGPT versi buatan Raya, Website Ai ini diciptakan oleh Raya Fadilla Azhar, Jika terjadi bug atau ada saran & pertanyaan silahkan Pencet Tombol 'LAPORKAN BUG/SARAN/PERTANYAAN DISINI' atau WhatsApp saya kalau anda punya nomor saya. Terima kasih, selamat menggunakan website ai ini ya.";
                             this.messages.push({ role: "assistant", content: welcomeMessage });
                             this.firstInteraction = false;
                             this.typing = false;
