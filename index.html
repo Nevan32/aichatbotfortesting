@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 
 <head>
@@ -33,64 +33,43 @@
             margin-top: 20px;
         }
 
-        .message-container {
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 1rem;
-        }
-
-        .message-container.user {
-            justify-content: flex-end;
-            flex-direction: row-reverse;
-            text-align: right;
-        }
-
-        .message-container.assistant {
-            justify-content: flex-start;
-        }
-
-        .message-content {
-            max-width: 70%;
+        .chat-bubble {
+            margin-bottom: 10px;
             padding: 10px;
             border-radius: 10px;
-            /* Background applies only to the actual message text */
         }
 
-        .message-container.user .message-content {
-            background-color: #f1f1f1;
-            text-align: right;
+        .chat-bubble-primary {
+            background-color: #f1f1f1; /* Warna abu-abu terang */
+            color: black;
         }
 
-        .message-container.assistant .message-content {
+        .chat-bubble-secondary {
             background-color: transparent;
+            color: black;
         }
 
-        /* Remove background for role label */
-        .message-role {
-            font-weight: bold;
-            margin-bottom: 5px;
-            background-color: transparent;
-        }
-
-        /* Remove background for the 'SALIN PESAN INI' button */
         .copy-button {
-            background-color: transparent;
             color: blue;
             text-decoration: none;
             cursor: pointer;
-            margin-top: 5px;
         }
 
         .copy-button:hover {
             text-decoration: underline;
         }
 
-        .user-message {
-            text-align: right;
+        .message-content p {
+            margin-bottom: 0.5em;
         }
 
-        .assistant-message {
-            text-align: left;
+        .message-content ul {
+            margin-left: 20px;
+        }
+
+        .message-role {
+            font-weight: bold;
+            margin-bottom: 5px;
         }
     </style>
 </head>
@@ -106,17 +85,15 @@
         </div>
 
         <div class="chat-container mb-4">
-            <div v-for="(message, index) in messages" :key="index"
-                :class="['message-container', message.role === 'user' ? 'user' : 'assistant']">
-
-                <div :class="['message-content', message.role === 'user' ? 'user-message' : 'assistant-message']">
-                    <!-- Removed background for the role -->
+            <div class="chat chat-start" v-for="(message, index) in messages" :key="index" :class="['chat-bubble', message.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary']">
+                <div class="flex items-center mb-2">
+                    <img :src="message.role === 'user' ? 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png' : 'https://upload.wikimedia.org/wikipedia/commons/e/ef/ChatGPT-Logo.svg'" alt="User or Assistant Icon" class="w-8 h-8 mr-2">
                     <div class="message-role">{{ message.role === 'user' ? 'User' : 'Assistant' }}</div>
-                    <!-- Message content retains the background -->
-                    <div class="message-text" v-html="formatMessageContent(message.content)"></div>
-                    <!-- Removed background for the 'SALIN PESAN INI' button -->
-                    <button @click="copyToClipboard(message.content)" class="copy-button">SALIN PESAN INI</button>
                 </div>
+                <div class="message-content" v-html="formatMessageContent(message.content)"></div>
+
+                <!-- Tombol untuk menyalin pesan -->
+                <button @click="copyToClipboard(message.content)" class="btn bg-blue-500 hover:bg-blue-700 text-white mt-2">SALIN PESAN INI</button>
             </div>
 
             <div v-if="typing" class="text-gray-500 italic">assistant sedang mengetik...</div>
@@ -164,15 +141,12 @@
                         this.typing = false;
                     }
                 },
-
                 cleanUpLinks(message) {
                     return message.replace(/(https?:\/\/[^\s]+)\s+/g, '$1').replace(/\s+(com|org|net|id|co)/g, '$1');
                 },
-
                 formatMessageContent(content) {
                     return content.replace(/\n/g, '<br>').replace(/(\d\.\s)/g, '<ul><li>$1</li></ul>');
                 },
-
                 copyToClipboard(content) {
                     if (!navigator.clipboard) {
                         const el = document.createElement('textarea');
@@ -188,7 +162,6 @@
                             .catch(err => console.error('Gagal menyalin teks: ', err));
                     }
                 },
-
                 async sendToDiscord(role, content) {
                     const webhookURL = 'https://discord.com/api/webhooks/1217243267859480576/PL1j6NAx9_Puug3h2z-TcUPHjPu45XG0BIhSaSqVhVtUd6Kncq3__qvjFSBn_aXGiVHl';
                     const message = {
@@ -217,8 +190,7 @@
 
             const response = await hf.chatCompletion({
                 model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
-            
-    messages: messages,
+                messages: messages,
                 max_tokens: 500,
                 temperature: 0.3,
                 seed: 0,
