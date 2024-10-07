@@ -71,20 +71,6 @@
             font-weight: bold;
             margin-bottom: 5px;
         }
-
-        /* Custom styling for the button */
-        .custom-btn {
-            background-color: #38a169; /* Warna hijau */
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            border: none;
-            cursor: pointer;
-        }
-
-        .custom-btn:hover {
-            background-color: #2f855a; /* Warna hijau lebih gelap saat hover */
-        }
     </style>
 </head>
 
@@ -97,7 +83,7 @@
         <!-- Tambahkan tombol di sini -->
         <div class="text-center mb-4">
             <a href="https://nevan32.github.io/aichatbotfortesting/" target="_blank">
-                <button class="custom-btn">Laporkan Bug/Saran/Pertanyaan Disini</button>
+                <button class="btn bg-green-500 hover:bg-green-700 text-white">Laporkan Bug/Saran/Pertanyaan Disini</button>
             </a>
         </div>
 
@@ -236,5 +222,13 @@
                 messages: messages,
                 max_tokens: 500,
                 temperature: 0.3,
+                seed: 0,
+            });
 
-        
+            return response.choices[0].message.content;
+        }
+    </script>
+
+</body>
+
+</html>
