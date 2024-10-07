@@ -35,6 +35,11 @@
             text-align: left;
             color: green;
         }
+        .message.typing {
+            text-align: left;
+            font-style: italic;
+            color: gray;
+        }
         #input-box {
             width: 60%;
             max-width: 700px;
@@ -71,6 +76,7 @@
     <script>
         const chatBox = document.getElementById('chat-box');
         const userInput = document.getElementById('user-input');
+        let typingMessage = null;
 
         function addMessage(message, sender) {
             const messageDiv = document.createElement('div');
@@ -80,6 +86,21 @@
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
+        function showTyping() {
+            typingMessage = document.createElement('div');
+            typingMessage.classList.add('message', 'typing');
+            typingMessage.textContent = "AI sedang mengetik...";
+            chatBox.appendChild(typingMessage);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function removeTyping() {
+            if (typingMessage) {
+                chatBox.removeChild(typingMessage);
+                typingMessage = null;
+            }
+        }
+
         async function sendMessage() {
             const message = userInput.value;
             if (message.trim() === '') return;
@@ -87,21 +108,30 @@
             addMessage(message, 'user');
             userInput.value = '';
 
-            const response = await fetch('https://api.openai.com/v1/completions', {
+            // Show typing status
+            showTyping();
+
+            const response = await fetch('https://api-inference.huggingface.co/models/gpt2', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer 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`
+                    'Authorization': `Bearer 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`
                 },
                 body: JSON.stringify({
-                    model: "text-davinci-003",
-                    prompt: message,
-                    max_tokens: 150
+                    inputs: message
                 })
             });
 
             const data = await response.json();
-            addMessage(data.choices[0].text.trim(), 'bot');
+            
+            // Remove typing status
+            removeTyping();
+
+            if (data.error) {
+                addMessage("Error: " + data.error, 'bot');
+            } else {
+                addMessage(data[0].generated_text.trim(), 'bot');
+            }
         }
     </script>
 </body>
