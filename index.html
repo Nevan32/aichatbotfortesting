@@ -85,15 +85,21 @@
         </div>
 
         <div class="chat-container mb-4">
-            <div class="chat chat-start" v-for="(message, index) in messages" :key="index" :class="['chat-bubble', message.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary']">
-                <div class="flex items-center mb-2">
-                    <img :src="message.role === 'user' ? 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png' : 'https://upload.wikimedia.org/wikipedia/commons/e/ef/ChatGPT-Logo.svg'" alt="User or Assistant Icon" class="w-8 h-8 mr-2">
+            <div class="chat chat-start" v-for="(message, index) in messages" :key="index" :class="['chat-bubble', message.role === 'user' ? 'chat-bubble-primary float-right' : 'chat-bubble-secondary']">
+                <div class="flex items-center mb-2" v-if="message.role === 'user'">
+                    <div class="message-role">{{ message.role === 'user' ? 'User' : 'Assistant' }}</div>
+                    <img :src="'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png'" alt="User Icon" class="w-8 h-8 ml-2">
+                </div>
+                <div class="flex items-center mb-2" v-else>
+                    <img :src="'https://upload.wikimedia.org/wikipedia/commons/e/ef/ChatGPT-Logo.svg'" alt="Assistant Icon" class="w-8 h-8 mr-2">
                     <div class="message-role">{{ message.role === 'user' ? 'User' : 'Assistant' }}</div>
                 </div>
                 <div class="message-content" v-html="formatMessageContent(message.content)"></div>
 
-                <!-- Tombol untuk menyalin pesan -->
-                <button @click="copyToClipboard(message.content)" class="btn bg-blue-500 hover:bg-blue-700 text-white mt-2">SALIN PESAN INI</button>
+                <!-- Tombol untuk menyalin pesan, khusus untuk user -->
+                <div v-if="message.role === 'user'" class="flex justify-end">
+                    <button @click="copyToClipboard(message.content)" class="btn bg-blue-500 hover:bg-blue-700 text-white mt-2">SALIN PESAN INI</button>
+                </div>
             </div>
 
             <div v-if="typing" class="text-gray-500 italic">assistant sedang mengetik...</div>
