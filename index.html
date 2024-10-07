@@ -70,11 +70,83 @@
             font-weight: bold;
             margin-bottom: 5px;
         }
+
+        /* Drawer styling */
+        .drawer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 40%;
+            max-width: 300px;
+            height: 100%;
+            background-color: #ffffff;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .drawer.open {
+            transform: translateX(0);
+        }
+
+        .drawer-header {
+            padding: 10px;
+            background-color: #f1f1f1;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .drawer-content {
+            padding: 10px;
+        }
+
+        .menu-button {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 2000;
+        }
+
+        .new-chat-button {
+            background-color: #00aaff;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .new-chat-button:hover {
+            background-color: #0088cc;
+        }
     </style>
 </head>
 
 <body>
     <div id="app" class="container mx-auto p-4 flex flex-col h-full">
+        <!-- Tombol Menu untuk membuka drawer -->
+        <button @click="toggleDrawer" class="menu-button btn btn-secondary">≡</button>
+
+        <!-- Drawer untuk daftar history chat -->
+        <div :class="['drawer', { open: isDrawerOpen }]">
+            <div class="drawer-header">
+                <h2 class="text-lg font-bold">Daftar History Chat</h2>
+            </div>
+            <div class="drawer-content">
+                <!-- Tombol untuk buat chat baru -->
+                <div class="new-chat-button" @click="createNewChat">+ New Chat</div>
+
+                <ul>
+                    <li v-for="(history, index) in savedChats" :key="index" @click="loadChat(history.name)" class="cursor-pointer hover:bg-gray-200 p-2">
+                        {{ history.name }}
+                    </li>
+                </ul>
+                <input type="text" v-model="newHistoryName" placeholder="Nama history baru" class="input input-bordered w-full mt-4" />
+                <button @click="saveNewHistory" class="btn btn-primary mt-2 w-full">Simpan Chat Ini</button>
+            </div>
+        </div>
+
         <h1 class="text-3xl font-bold mb-4 text-center">AI Chatbot Sederhana</h1>
         <div class="text-center mb-4">
             <a href="https://nevan32.github.io/chatbotforlaporanbugorsaran.github.io/" target="_blank">
@@ -109,24 +181,75 @@
                 messages: [],
                 typing: false,
                 firstInteraction: true,
+                isDrawerOpen: false,
+                savedChats: [], // To store list of chat histories
+                newHistoryName: '', // Name for new chat history
             },
             created() {
-                // Load chat history from localStorage when the app is created
-                const savedMessages = localStorage.getItem('chatHistory');
-                if (savedMessages) {
-                    this.messages = JSON.parse(savedMessages);
-                    this.firstInteraction = false;
-                }
+                // Load saved chat history names
+                this.loadSavedChats();
+
+                // Check for unsaved current chat on reload
+                window.addEventListener('beforeunload', this.saveCurrentChat);
             },
             methods: {
+                toggleDrawer() {
+                    this.isDrawerOpen = !this.isDrawerOpen;
+                },
+
+                loadSavedChats() {
+                    const savedChats = localStorage.getItem('savedChats');
+                    if (savedChats) {
+                        this.savedChats = JSON.parse(savedChats);
+                    }
+                },
+
+                loadChat(name) {
+                    const chat = localStorage.getItem(name);
+                    if (chat) {
+                        this.messages = JSON.parse(chat);
+                        this.firstInteraction = false;
+                        this.isDrawerOpen = false; // Close drawer when chat is loaded
+                    }
+                },
+
+                saveNewHistory() {
+                    if (this.newHistoryName.trim()) {
+                        // Save the current chat under the new name
+                        localStorage.setItem(this.newHistoryName, JSON.stringify(this.messages));
+                        // Add to saved chats list
+                        this.savedChats.push({ name: this.newHistoryName });
+                        localStorage.setItem('savedChats', JSON.stringify(this.savedChats));
+                        this.newHistoryName = ''; // Reset input
+                        alert('History chat berhasil disimpan!');
+                    } else {
+                        alert('Nama history tidak boleh kosong!');
+                    }
+                },
+
+                createNewChat() {
+                    // Save current chat before starting a new one
+                    this.saveCurrentChat();
+                    // Reset chat messages
+                    this.messages = [];
+                    this.firstInteraction = true;
+                },
+
+                saveCurrentChat() {
+                    const currentChatName = 'currentChat_' + new Date().toISOString();
+                    localStorage.setItem(currentChatName, JSON.stringify(this.messages));
+
+                    // Add the current chat to savedChats if not already saved
+                    this.savedChats.push({ name: currentChatName });
+                    localStorage.setItem('savedChats', JSON.stringify(this.savedChats));
+                },
+
                 async sendMessage() {
                     if (this.inputMessage.trim() !== '') {
                         const userMessage = { role: "user", content: this.cleanUpLinks(this.inputMessage) };
                         this.inputMessage = '';
                         this.messages.push(userMessage);
-                        this.saveMessages(); // Save chat history after each new message
-                        
-                        this.sendToDiscord('User', userMessage.content);
+
                         this.typing = true;
 
                         if (this.firstInteraction) {
@@ -134,22 +257,13 @@
                             this.messages.push({ role: "assistant", content: welcomeMessage });
                             this.firstInteraction = false;
                             this.typing = false;
-                            this.saveMessages(); // Save after first interaction
-                            this.sendToDiscord('Assistant', welcomeMessage);
                             return;
                         }
 
                         const data = await generateText(this.messages);
                         this.typing = false;
                         this.messages.push({ role: "assistant", content: this.cleanUpLinks(data) });
-                        this.saveMessages(); // Save chat history after receiving assistant's message
-                        this.sendToDiscord('Assistant', data);
                     }
-                },
-
-                saveMessages() {
-                    // Save chat history to localStorage
-                    localStorage.setItem('chatHistory', JSON.stringify(this.messages));
                 },
 
                 cleanUpLinks(message) {
@@ -175,26 +289,6 @@
                             .catch(err => console.error('Gagal menyalin teks: ', err));
                     }
                 },
-
-                async sendToDiscord(role, content) {
-                    const webhookURL = 'https://discord.com/api/webhooks/1217243267859480576/PL1j6NAx9_Puug3h2z-TcUPHjPu45XG0BIhSaSqVhVtUd6Kncq3__qvjFSBn_aXGiVHl';
-                    const message = {
-                        username: role,
-                        content: content,
-                    };
-                    try {
-                        await fetch(webhookURL, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify(message),
-                        });
-                        console.log('Pesan terkirim ke Discord');
-                    } catch (error) {
-                        console.error('Gagal mengirim pesan ke Discord:', error);
-                    }
-                }
             }
         });
 
