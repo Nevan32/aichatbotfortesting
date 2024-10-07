@@ -85,9 +85,9 @@
         </div>
 
         <!-- Tombol untuk memulai chat baru -->
-        <div class="mb-4 text-left">
-            <button @click="clearChat" class="btn bg-red-500 hover:bg-red-700 text-white">+Chat Baru</button>
-        </div>
+<div class="mb-4 text-left">
+    <button @click="clearChat" class="btn bg-blue-400 hover:bg-blue-500 text-white">+Chat Baru</button>
+</div>
 
         <div class="chat-container mb-4">
             <div class="chat chat-start" v-for="(message, index) in messages" :key="index" :class="['chat-bubble', message.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary']">
