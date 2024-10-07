@@ -1,5 +1,6 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -112,27 +113,25 @@
             },
             methods: {
                 async sendMessage() {
-                    if (this.inputMessage.trim() !== '') {
+                    if (this.inputMessage.trim() !== '' || this.selectedFile) { // Cek jika ada input atau file
                         const userMessage = { role: "user", content: this.cleanUpLinks(this.inputMessage) };
-                        this.inputMessage = '';
                         this.messages.push(userMessage);
-                        
-                        // Kirim pesan user ke Discord Webhook
                         this.sendToDiscord('User', userMessage.content);
-
                         this.typing = true;
 
                         // Penanganan lampiran file jika ada
                         if (this.selectedFile) {
-                            const formData = new FormData();
-                            formData.append('file', this.selectedFile);
-                            // Ganti dengan endpoint upload yang sesuai
-                            await fetch('your-upload-endpoint-url', {
-                                method: 'POST',
-                                body: formData
-                            });
-                            // Reset setelah diunggah
-                            this.selectedFile = null;
+                            const fileUrl = await this.uploadFile(this.selectedFile); // Unggah file dan dapatkan URL
+                            if (fileUrl) {
+                                this.messages.push({ role: "user", content: `File telah diunggah: ${fileUrl}` });
+                                this.sendToDiscord('User', `File telah diunggah: ${fileUrl}`);
+
+                                // Panggil API untuk menganalisis gambar
+                                const analysisResult = await this.analyzeImage(fileUrl);
+                                this.messages.push({ role: "assistant", content: analysisResult });
+                                this.sendToDiscord('Assistant', analysisResult);
+                            }
+                            this.selectedFile = null; // Reset setelah diunggah
                         }
 
                         if (this.firstInteraction) {
@@ -144,17 +143,52 @@
                             return;
                         }
 
-                        // Hapus pemeriksaan keyword dan panggil API langsung untuk menghasilkan balasan
                         const data = await generateText(this.messages);
                         this.typing = false;
                         this.messages.push({ role: "assistant", content: this.cleanUpLinks(data) });
-                        this.sendToDiscord('Assistant', data); // Kirim pesan Assistant ke Discord Webhook
+                        this.sendToDiscord('Assistant', data);
                         this.typing = false;
                     }
                 },
 
                 handleFileUpload(event) {
                     this.selectedFile = event.target.files[0]; // Simpan file yang dipilih
+                },
+
+                async uploadFile(file) {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    // Ganti dengan endpoint upload yang sesuai
+                    const response = await fetch('your-upload-endpoint-url', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        return data.fileUrl; // Ganti dengan struktur respons yang sesuai
+                    } else {
+                        console.error('Gagal mengunggah file:', response.statusText);
+                        return null;
+                    }
+                },
+
+                async analyzeImage(imageUrl) {
+                    const apiUrl = 'URL_ANALYZE_IMAGE'; // Ganti dengan URL endpoint API pengenalan gambar yang sesuai
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ imageUrl: imageUrl }), // Kirim URL gambar ke API
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        return data.result; // Pastikan ini adalah hasil yang Anda inginkan dari API
+                    } else {
+                        console.error('Gagal menganalisis gambar:', response.statusText);
+                        return 'Gagal menganalisis gambar.';
+                    }
                 },
 
                 cleanUpLinks(message) {
@@ -219,4 +253,5 @@
         }
     </script>
 </body>
+
 </html>
