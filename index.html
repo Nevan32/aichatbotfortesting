@@ -99,6 +99,12 @@
                         reader.onload = (e) => {
                             const imgTag = `<img src="${e.target.result}" alt="Gambar yang diunggah" style="max-width:200px;"/>`;
                             this.messages.push({ role: "user", content: imgTag });
+                            this.typing = true;
+                            setTimeout(() => {
+                                const aiResponse = "Gambar berhasil diunggah dan sedang diproses.";
+                                this.messages.push({ role: "assistant", content: aiResponse });
+                                this.typing = false;
+                            }, 1000);
                         };
                         reader.readAsDataURL(file);
                     } else if (fileType === 'text/plain') {
@@ -107,6 +113,12 @@
                         reader.onload = (e) => {
                             const textContent = e.target.result;
                             this.messages.push({ role: "user", content: `<pre>${textContent}</pre>` });
+                            this.typing = true;
+                            setTimeout(() => {
+                                const aiResponse = "File teks berhasil diunggah dan sedang diproses.";
+                                this.messages.push({ role: "assistant", content: aiResponse });
+                                this.typing = false;
+                            }, 1000);
                         };
                         reader.readAsText(file);
                     } else {
