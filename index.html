@@ -33,20 +33,17 @@
             margin-top: 20px;
         }
 
-        .chat-bubble {
-            margin-bottom: 10px;
-            padding: 10px;
+        .message-box {
             border-radius: 10px;
+            padding: 10px;
         }
 
-        .chat-bubble-primary {
-            background-color: #f1f1f1; /* Warna abu-abu terang */
-            color: black;
+        .bg-blue-100 {
+            background-color: #ebf8ff; /* Light blue */
         }
 
-        .chat-bubble-secondary {
-            background-color: transparent;
-            color: black;
+        .bg-gray-100 {
+            background-color: #f7fafc; /* Light gray */
         }
 
         .copy-button {
@@ -85,12 +82,16 @@
         </div>
 
         <div class="chat-container mb-4">
-            <div class="chat chat-start" v-for="(message, index) in messages" :key="index" :class="['chat-bubble', message.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary']">
+            <div class="chat chat-start" v-for="(message, index) in messages" :key="index">
                 <div class="flex items-center mb-2">
                     <img :src="message.role === 'user' ? 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png' : 'https://upload.wikimedia.org/wikipedia/commons/e/ef/ChatGPT-Logo.svg'" alt="User or Assistant Icon" class="w-8 h-8 mr-2">
                     <div class="message-role">{{ message.role === 'user' ? 'User' : 'Assistant' }}</div>
                 </div>
-                <div class="message-content" v-html="formatMessageContent(message.content)"></div>
+
+                <!-- Message content with specific background color -->
+                <div :class="['message-box', message.role === 'user' ? 'bg-blue-100' : 'bg-gray-100']">
+                    <div class="message-content p-4" v-html="formatMessageContent(message.content)"></div>
+                </div>
 
                 <!-- Tombol untuk menyalin pesan -->
                 <button @click="copyToClipboard(message.content)" class="btn bg-blue-500 hover:bg-blue-700 text-white mt-2">SALIN PESAN INI</button>
@@ -191,7 +192,8 @@
             const response = await hf.chatCompletion({
                 model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
                 messages: messages,
-                max_tokens: 500,
+            
+    max_tokens: 500,
                 temperature: 0.3,
                 seed: 0,
             });
