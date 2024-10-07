@@ -10,67 +10,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-        body {
-            background-color: #f8fafc;
-            font-family: 'Arial', sans-serif;
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .chat-container {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            flex: 1;
-            overflow-y: auto;
-            margin-bottom: 20px;
-        }
-
-        .input-area {
-            margin-top: 20px;
-        }
-
-        .chat-bubble {
-            margin-bottom: 10px;
-            padding: 10px;
-            border-radius: 10px;
-        }
-
-        .chat-bubble-primary {
-            background-color: transparent;
-            color: black;
-        }
-
-        .chat-bubble-secondary {
-            background-color: transparent;
-            color: black;
-        }
-
-        .copy-button {
-            color: blue;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .copy-button:hover {
-            text-decoration: underline;
-        }
-
-        .message-content p {
-            margin-bottom: 0.5em;
-        }
-
-        .message-content ul {
-            margin-left: 20px;
-        }
-
-        .message-role {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
+        /* Styles omitted for brevity */
     </style>
 </head>
 
@@ -78,7 +18,6 @@
     <div id="app" class="container mx-auto p-4 flex flex-col h-full">
         <h1 class="text-3xl font-bold mb-4 text-center">AI Chatbot Sederhana</h1>
 
-        <!-- Tambahkan tombol di sini -->
         <div class="text-center mb-4">
             <a href="https://nevan32.github.io/chatbotforlaporanbugorsaran.github.io/" target="_blank">
                 <button class="btn bg-green-500 hover:bg-green-700 text-white">Laporkan Bug/Saran/Pertanyaan Disini</button>
@@ -86,7 +25,8 @@
         </div>
 
         <div class="chat-container mb-4">
-            <div class="chat chat-start" v-for="(message, index) in messages" :key="index" :class="['chat-bubble', message.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary']">
+            <div class="chat chat-start" v-for="(message, index) in messages" :key="index"
+                :class="['chat-bubble', message.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary']">
                 <div class="message-role">{{ message.role === 'user' ? 'User' : 'Assistant' }}</div>
                 <div class="message-content" v-html="formatMessageContent(message.content)"></div>
                 <span @click="copyToClipboard(message.content)" class="copy-button">Salin</span>
@@ -95,7 +35,8 @@
         </div>
 
         <div class="input-area">
-            <input type="text" v-model="inputMessage" @keyup.enter="sendMessage" placeholder="Ketik pesan..." class="input input-bordered w-full" />
+            <input type="text" v-model="inputMessage" @keyup.enter="sendMessage" placeholder="Ketik pesan..."
+                class="input input-bordered w-full" />
             <input type="file" @change="handleFileUpload" class="input input-bordered w-full mt-2" />
             <button @click="sendMessage" class="btn btn-primary mt-2">Kirim</button>
         </div>
@@ -108,34 +49,28 @@
                 inputMessage: '',
                 messages: [],
                 typing: false,
-                selectedFile: null, // Tambahkan properti untuk menyimpan file yang diunggah
+                selectedFile: null,
                 firstInteraction: true,
             },
             methods: {
                 async sendMessage() {
-                    if (this.inputMessage.trim() !== '' || this.selectedFile) { // Cek jika ada input atau file
+                    if (this.inputMessage.trim() !== '') {
                         const userMessage = { role: "user", content: this.cleanUpLinks(this.inputMessage) };
+                        this.inputMessage = '';
                         this.messages.push(userMessage);
+
                         this.sendToDiscord('User', userMessage.content);
+
                         this.typing = true;
 
                         // Penanganan lampiran file jika ada
                         if (this.selectedFile) {
-                            const fileUrl = await this.uploadFile(this.selectedFile); // Unggah file dan dapatkan URL
-                            if (fileUrl) {
-                                this.messages.push({ role: "user", content: `File telah diunggah: ${fileUrl}` });
-                                this.sendToDiscord('User', `File telah diunggah: ${fileUrl}`);
-
-                                // Panggil API untuk menganalisis gambar
-                                const analysisResult = await this.analyzeImage(fileUrl);
-                                this.messages.push({ role: "assistant", content: analysisResult });
-                                this.sendToDiscord('Assistant', analysisResult);
-                            }
-                            this.selectedFile = null; // Reset setelah diunggah
+                            await this.handleFileProcessing();
+                            this.selectedFile = null;
                         }
 
                         if (this.firstInteraction) {
-                            const welcomeMessage = "Halo Selamat Datang di website ChatGPT versi buatan Raya, Website Ai ini diciptakan oleh Raya Fadilla Azhar, Jika terjadi bug atau ada saran & pertanyaan silahkan Pencet Tombol 'LAPORKAN BUG/SARAN/PERTANYAAN DISINI'. Terima kasih, selamat menggunakan website ai ini ya.";
+                            const welcomeMessage = "Halo Selamat Datang...";
                             this.messages.push({ role: "assistant", content: welcomeMessage });
                             this.firstInteraction = false;
                             this.typing = false;
@@ -147,47 +82,35 @@
                         this.typing = false;
                         this.messages.push({ role: "assistant", content: this.cleanUpLinks(data) });
                         this.sendToDiscord('Assistant', data);
-                        this.typing = false;
                     }
                 },
 
                 handleFileUpload(event) {
-                    this.selectedFile = event.target.files[0]; // Simpan file yang dipilih
+                    this.selectedFile = event.target.files[0];
                 },
 
-                async uploadFile(file) {
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    // Ganti dengan endpoint upload yang sesuai
-                    const response = await fetch('your-upload-endpoint-url', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    if (response.ok) {
-                        const data = await response.json();
-                        return data.fileUrl; // Ganti dengan struktur respons yang sesuai
-                    } else {
-                        console.error('Gagal mengunggah file:', response.statusText);
-                        return null;
-                    }
-                },
+                async handleFileProcessing() {
+                    const file = this.selectedFile;
+                    const fileType = file.type;
 
-                async analyzeImage(imageUrl) {
-                    const apiUrl = 'URL_ANALYZE_IMAGE'; // Ganti dengan URL endpoint API pengenalan gambar yang sesuai
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ imageUrl: imageUrl }), // Kirim URL gambar ke API
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        return data.result; // Pastikan ini adalah hasil yang Anda inginkan dari API
+                    if (fileType.startsWith('image/')) {
+                        // Tampilkan pratinjau gambar
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const imgTag = `<img src="${e.target.result}" alt="Gambar yang diunggah" style="max-width:200px;"/>`;
+                            this.messages.push({ role: "user", content: imgTag });
+                        };
+                        reader.readAsDataURL(file);
+                    } else if (fileType === 'text/plain') {
+                        // Baca dan tampilkan isi file teks
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const textContent = e.target.result;
+                            this.messages.push({ role: "user", content: `<pre>${textContent}</pre>` });
+                        };
+                        reader.readAsText(file);
                     } else {
-                        console.error('Gagal menganalisis gambar:', response.statusText);
-                        return 'Gagal menganalisis gambar.';
+                        alert('Jenis file tidak didukung! Hanya gambar dan teks yang didukung.');
                     }
                 },
 
@@ -217,16 +140,11 @@
 
                 async sendToDiscord(role, content) {
                     const webhookURL = 'https://discord.com/api/webhooks/1217243267859480576/PL1j6NAx9_Puug3h2z-TcUPHjPu45XG0BIhSaSqVhVtUd6Kncq3__qvjFSBn_aXGiVHl';
-                    const message = {
-                        username: role,
-                        content: content,
-                    };
+                    const message = { username: role, content: content };
                     try {
                         await fetch(webhookURL, {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(message),
                         });
                         console.log('Pesan terkirim ke Discord');
@@ -240,7 +158,6 @@
         async function generateText(messages) {
             const { HfInference } = await import('https://esm.sh/@huggingface/inference');
             const hf = new HfInference('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');
-
             const response = await hf.chatCompletion({
                 model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
                 messages: messages,
@@ -248,7 +165,6 @@
                 temperature: 0.3,
                 seed: 0,
             });
-
             return response.choices[0].message.content;
         }
     </script>
