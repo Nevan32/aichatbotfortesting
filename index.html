@@ -118,7 +118,7 @@
         <!-- Login Modal -->
         <div :class="['modal', { active: !showChat }]" @click="handleModalClick">
             <div class="modal-content">
-                <h2 class="text-xl font-bold mb-4">Login</h2>
+                <h2 class="text-xl font-bold mb-4">Apakah Anda ingin login ke akun Anda? Jika iya, silahkan masukkan nama dan password. Anda boleh skip login ini jika Anda tidak punya akun.</h2>
                 <input type="text" v-model="username" placeholder="Username" class="input input-bordered w-full mb-2" />
                 <input type="password" v-model="password" placeholder="Password" class="input input-bordered w-full mb-4" />
                 <div class="flex justify-between">
@@ -166,7 +166,7 @@
                         this.typing = true;
 
                         if (this.firstInteraction) {
-                            const welcomeMessage = "Halo Selamat Datang di website ChatGPT versi buatan Raya, Website Ai ini diciptakan oleh Raya Fadilla Azhar, Jika terjadi bug atau ada saran & pertanyaan silahkan Pencet Tombol 'LAPORKAN BUG/SARAN/PERTANYAAN DISINI' atau WhatsApp saya kalau anda punya nomor saya. Terima kasih, selamat menggunakan website ai ini ya.";
+                            const welcomeMessage = "Halo Selamat Datang di website ChatGPT versi buatan Raya. Jika terjadi bug atau ada saran, silahkan Pencet Tombol 'LAPORKAN BUG/SARAN/PERTANYAAN DISINI'. Terima kasih, selamat menggunakan website ini.";
                             this.messages.push({ role: "assistant", content: welcomeMessage });
                             this.firstInteraction = false;
                             this.typing = false;
