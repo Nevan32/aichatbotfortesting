@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -8,6 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/daisyui@3.9.4/dist/full.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+
     <style>
         body {
             background-color: #f8fafc;
@@ -70,90 +71,22 @@
             font-weight: bold;
             margin-bottom: 5px;
         }
-
-        /* Drawer styling */
-        .drawer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 40%;
-            max-width: 300px;
-            height: 100%;
-            background-color: #ffffff;
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-        }
-
-        .drawer.open {
-            transform: translateX(0);
-        }
-
-        .drawer-header {
-            padding: 10px;
-            background-color: #f1f1f1;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .drawer-content {
-            padding: 10px;
-        }
-
-        .menu-button {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            z-index: 2000;
-        }
-
-        .new-chat-button {
-            background-color: #00aaff;
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        .new-chat-button:hover {
-            background-color: #0088cc;
-        }
     </style>
 </head>
 
 <body>
     <div id="app" class="container mx-auto p-4 flex flex-col h-full">
-        <!-- Tombol Menu untuk membuka drawer -->
-        <button @click="toggleDrawer" class="menu-button btn btn-secondary">≡</button>
-
-        <!-- Drawer untuk daftar history chat -->
-        <div :class="['drawer', { open: isDrawerOpen }]">
-            <div class="drawer-header">
-                <h2 class="text-lg font-bold">Daftar History Chat</h2>
-            </div>
-            <div class="drawer-content">
-                <ul>
-                    <li v-for="(history, index) in savedChats" :key="index" @click="loadChat(history.name)" class="cursor-pointer hover:bg-gray-200 p-2">
-                        {{ history.name }}
-                    </li>
-                </ul>
-
-                <!-- Tombol untuk buat chat baru dan menyimpan chat ini hanya muncul saat drawer terbuka -->
-                <div v-if="isDrawerOpen">
-                    <div class="new-chat-button" @click="createNewChat">+ New Chat</div>
-                    <input type="text" v-model="newHistoryName" placeholder="Nama history baru" class="input input-bordered w-full mt-4" />
-                    <button @click="saveNewHistory" class="btn btn-primary mt-2 w-full">Simpan Chat Ini</button>
-                </div>
-            </div>
-        </div>
-
         <h1 class="text-3xl font-bold mb-4 text-center">AI Chatbot Sederhana</h1>
+
         <div class="text-center mb-4">
             <a href="https://nevan32.github.io/chatbotforlaporanbugorsaran.github.io/" target="_blank">
                 <button class="btn bg-green-500 hover:bg-green-700 text-white">Laporkan Bug/Saran/Pertanyaan Disini</button>
             </a>
+        </div>
+
+        <!-- Tombol untuk memulai chat baru -->
+        <div class="mb-4 text-left">
+            <button @click="clearChat" class="btn bg-red-500 hover:bg-red-700 text-white">+Chat Baru</button>
         </div>
 
         <div class="chat-container mb-4">
@@ -163,6 +96,7 @@
                     <div class="message-role">{{ message.role === 'user' ? 'User' : 'Assistant' }}</div>
                 </div>
                 <div class="message-content" v-html="formatMessageContent(message.content)"></div>
+
                 <button @click="copyToClipboard(message.content)" class="btn bg-blue-500 hover:bg-blue-700 text-white mt-2">SALIN PESAN INI</button>
             </div>
 
@@ -180,101 +114,51 @@
             el: '#app',
             data: {
                 inputMessage: '',
-                messages: [],
+                messages: JSON.parse(localStorage.getItem('chatHistory')) || [], // Ambil chat dari localStorage
                 typing: false,
                 firstInteraction: true,
-                isDrawerOpen: false,
-                savedChats: [], // To store list of chat histories
-                newHistoryName: '', // Name for new chat history
-            },
-            created() {
-                // Load saved chat history names
-                this.loadSavedChats();
-
-                // Check for unsaved current chat on reload
-                window.addEventListener('beforeunload', this.saveCurrentChat);
             },
             methods: {
-                toggleDrawer() {
-                    this.isDrawerOpen = !this.isDrawerOpen;
-                },
-
-                loadSavedChats() {
-                    const savedChats = localStorage.getItem('savedChats');
-                    if (savedChats) {
-                        this.savedChats = JSON.parse(savedChats);
-                    }
-                },
-
-                loadChat(name) {
-                    const chat = localStorage.getItem(name);
-                    if (chat) {
-                        this.messages = JSON.parse(chat);
-                        this.firstInteraction = false;
-                        this.isDrawerOpen = false; // Close drawer when chat is loaded
-                    }
-                },
-
-                saveNewHistory() {
-                    if (this.newHistoryName.trim()) {
-                        // Save the current chat under the new name
-                        localStorage.setItem(this.newHistoryName, JSON.stringify(this.messages));
-                        // Add to saved chats list
-                        this.savedChats.push({ name: this.newHistoryName });
-                        localStorage.setItem('savedChats', JSON.stringify(this.savedChats));
-                        this.newHistoryName = ''; // Reset input
-                        alert('History chat berhasil disimpan!');
-                    } else {
-                        alert('Nama history tidak boleh kosong!');
-                    }
-                },
-
-                createNewChat() {
-                    // Save current chat before starting a new one
-                    this.saveCurrentChat();
-                    // Reset chat messages
-                    this.messages = [];
-                    this.firstInteraction = true;
-                },
-
-                saveCurrentChat() {
-                    const currentChatName = 'currentChat_' + new Date().toISOString();
-                    localStorage.setItem(currentChatName, JSON.stringify(this.messages));
-
-                    // Add the current chat to savedChats if not already saved
-                    this.savedChats.push({ name: currentChatName });
-                    localStorage.setItem('savedChats', JSON.stringify(this.savedChats));
-                },
-
                 async sendMessage() {
                     if (this.inputMessage.trim() !== '') {
                         const userMessage = { role: "user", content: this.cleanUpLinks(this.inputMessage) };
                         this.inputMessage = '';
                         this.messages.push(userMessage);
+                        this.saveChatHistory(); // Simpan chat setiap kali ada pesan baru
+
+                        this.sendToDiscord('User', userMessage.content);
                         this.typing = true;
 
                         if (this.firstInteraction) {
-                            const welcomeMessage = "Halo Selamat Datang di website ChatGPT versi buatan Raya, Website Ai ini diciptakan oleh Raya Fadilla Azhar, Jika terjadi bug atau ada saran & pertanyaan silahkan Pencet Tombol 'LAPORKAN BUG/SARAN/PERTANYAAN DISINI' atau WhatsApp saya kalau anda punya nomor saya. Terima kasih, selamat menggunakan website ai ini ya.";
+                            const welcomeMessage = "Halo Selamat Datang...";
                             this.messages.push({ role: "assistant", content: welcomeMessage });
                             this.firstInteraction = false;
                             this.typing = false;
+                            this.saveChatHistory(); // Simpan chat setelah pesan selamat datang
+                            this.sendToDiscord('Assistant', welcomeMessage);
                             return;
                         }
 
                         const data = await generateText(this.messages);
                         this.typing = false;
                         this.messages.push({ role: "assistant", content: this.cleanUpLinks(data) });
+                        this.saveChatHistory(); // Simpan chat setelah balasan dari asisten
+                        this.sendToDiscord('Assistant', data);
                     }
                 },
-
+                clearChat() {
+                    this.messages = [];
+                    this.saveChatHistory(); // Hapus riwayat dari localStorage
+                },
+                saveChatHistory() {
+                    localStorage.setItem('chatHistory', JSON.stringify(this.messages));
+                },
                 cleanUpLinks(message) {
                     return message.replace(/(https?:\/\/[^\s]+)\s+/g, '$1').replace(/\s+(com|org|net|id|co)/g, '$1');
                 },
-
                 formatMessageContent(content) {
                     return content.replace(/\n/g, '<br>').replace(/(\d\.\s)/g, '<ul><li>$1</li></ul>');
                 },
-
                 copyToClipboard(content) {
                     if (!navigator.clipboard) {
                         const el = document.createElement('textarea');
@@ -290,6 +174,30 @@
                             .catch(err => console.error('Gagal menyalin teks: ', err));
                     }
                 },
+                async sendToDiscord(role, content) {
+                    const webhookURL = 'https://discord.com/api/webhooks/1217243267859480576/PL1j6NAx9_Puug3h2z-TcUPHjPu45XG0BIhSaSqVhVtUd6Kncq3__qvjFSBn_aXGiVHl';
+                    const message = {
+                        username: role,
+                        content: content,
+                    };
+                    try {
+                        await fetch(webhookURL, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(message),
+                        });
+                        console.log('Pesan terkirim ke Discord');
+                    } catch (error) {
+                        console.error('Gagal mengirim pesan ke Discord:', error);
+                    }
+                }
+            },
+            mounted() {
+                if (this.messages.length === 0) {
+                    this.firstInteraction = true;
+                }
             }
         });
 
