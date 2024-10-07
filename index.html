@@ -53,50 +53,28 @@
             max-width: 70%;
             padding: 10px;
             border-radius: 10px;
+            /* Background applies only to the actual message text */
         }
 
-        /* Remove background for assistant messages */
+        .message-container.user .message-content {
+            background-color: #f1f1f1;
+            text-align: right;
+        }
+
         .message-container.assistant .message-content {
             background-color: transparent;
         }
 
-        /* Set user background color to assistant's previous color */
-        .message-container.user .message-content {
-            background-color: #f1f1f1;
-            float: right;
-            text-align: right;
-        }
-
+        /* Remove background for role label */
         .message-role {
             font-weight: bold;
             margin-bottom: 5px;
+            background-color: transparent;
         }
 
-        .message-icon {
-            width: 40px;
-            height: 40px;
-        }
-
-        /* Adjust user icon to be on the right side */
-        .message-container.user .message-icon {
-            margin-left: 10px;
-            margin-right: 0;
-            float: right;
-        }
-
-        .message-container.assistant .message-icon {
-            margin-right: 10px;
-        }
-
-        .user-message {
-            text-align: right;
-        }
-
-        .assistant-message {
-            text-align: left;
-        }
-
+        /* Remove background for the 'SALIN PESAN INI' button */
         .copy-button {
+            background-color: transparent;
             color: blue;
             text-decoration: none;
             cursor: pointer;
@@ -105,6 +83,14 @@
 
         .copy-button:hover {
             text-decoration: underline;
+        }
+
+        .user-message {
+            text-align: right;
+        }
+
+        .assistant-message {
+            text-align: left;
         }
     </style>
 </head>
@@ -123,12 +109,12 @@
             <div v-for="(message, index) in messages" :key="index"
                 :class="['message-container', message.role === 'user' ? 'user' : 'assistant']">
 
-                <img :src="message.role === 'user' ? 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png' : 'https://upload.wikimedia.org/wikipedia/commons/e/ef/ChatGPT-Logo.svg'"
-                    alt="User or Assistant Icon" class="message-icon">
-
                 <div :class="['message-content', message.role === 'user' ? 'user-message' : 'assistant-message']">
+                    <!-- Removed background for the role -->
                     <div class="message-role">{{ message.role === 'user' ? 'User' : 'Assistant' }}</div>
+                    <!-- Message content retains the background -->
                     <div class="message-text" v-html="formatMessageContent(message.content)"></div>
+                    <!-- Removed background for the 'SALIN PESAN INI' button -->
                     <button @click="copyToClipboard(message.content)" class="copy-button">SALIN PESAN INI</button>
                 </div>
             </div>
