@@ -35,7 +35,7 @@
 
         .message-container {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 1rem;
         }
 
@@ -56,7 +56,6 @@
 
         .message-container.user .message-content {
             background-color: #d1e7dd;
-            text-align: right;
         }
 
         .message-role {
@@ -67,36 +66,30 @@
         .message-icon {
             width: 40px;
             height: 40px;
-            margin: 0 10px;
-        }
-
-        .message-icon.user {
-            margin-left: 10px;
-        }
-
-        .message-icon.assistant {
             margin-right: 10px;
         }
 
         .user-message {
-            display: flex;
             flex-direction: row-reverse;
+            text-align: right;
         }
 
         .assistant-message {
-            display: flex;
             flex-direction: row;
+            text-align: left;
         }
 
         .copy-button {
             color: blue;
             text-decoration: none;
             cursor: pointer;
+            margin-top: 5px;
         }
 
         .copy-button:hover {
             text-decoration: underline;
         }
+
     </style>
 </head>
 
@@ -116,15 +109,13 @@
                 
                 <img :src="message.role === 'user' ? 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png' : 'https://upload.wikimedia.org/wikipedia/commons/e/ef/ChatGPT-Logo.svg'"
                     alt="User or Assistant Icon"
-                    :class="['message-icon', message.role === 'user' ? 'user' : 'assistant']">
+                    class="message-icon">
                 
                 <div :class="['message-content', message.role === 'user' ? 'user-message' : 'assistant-message']">
                     <div class="message-role">{{ message.role === 'user' ? 'User' : 'Assistant' }}</div>
                     <div class="message-text" v-html="formatMessageContent(message.content)"></div>
+                    <button @click="copyToClipboard(message.content)" class="copy-button">SALIN PESAN INI</button>
                 </div>
-
-                <!-- Tombol untuk menyalin pesan -->
-                <button @click="copyToClipboard(message.content)" class="btn bg-blue-500 hover:bg-blue-700 text-white mt-2">SALIN PESAN INI</button>
             </div>
 
             <div v-if="typing" class="text-gray-500 italic">assistant sedang mengetik...</div>
