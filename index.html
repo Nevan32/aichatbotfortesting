@@ -7,7 +7,6 @@
     <link href="https://cdn.jsdelivr.net/npm/daisyui@3.9.4/dist/full.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-
     <style>
         body {
             background-color: #f8fafc;
@@ -70,11 +69,10 @@
                 <button class="btn bg-green-500 hover:bg-green-700 text-white">Laporkan Bug/Saran/Pertanyaan Disini</button>
             </a>
         </div>
-
+        <!-- Tombol untuk memulai chat baru -->
         <div class="mb-4 text-left">
             <button @click="clearChat" class="btn bg-blue-400 hover:bg-blue-500 text-white">+Chat Baru</button>
         </div>
-
         <div class="chat-container mb-4">
             <div class="chat chat-start" v-for="(message, index) in messages" :key="index" :class="['chat-bubble', message.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary']">
                 <div class="flex items-center mb-2">
@@ -86,7 +84,6 @@
             </div>
             <div v-if="typing" class="text-gray-500 italic">assistant sedang mengetik...</div>
         </div>
-
         <div class="input-area">
             <input type="text" v-model="inputMessage" @keyup.enter="sendMessage" placeholder="Ketik pesan..." class="input input-bordered w-full" />
             <button @click="sendMessage" class="btn btn-primary mt-2">Kirim</button>
@@ -98,7 +95,7 @@
             el: '#app',
             data: {
                 inputMessage: '',
-                messages: JSON.parse(localStorage.getItem('chatHistory')) || [],
+                messages: JSON.parse(localStorage.getItem('chatHistory')) || [], // Ambil chat dari localStorage
                 typing: false,
                 firstInteraction: true,
             },
@@ -112,7 +109,7 @@
                         this.sendToDiscord('User', userMessage.content);
                         this.typing = true;
 
-                        const data = await generateText(this.messages); // Call to the modified generateText function
+                        const data = await generateText(this.messages);
                         this.typing = false;
                         this.messages.push({ role: "assistant", content: this.cleanUpLinks(data) });
                         this.saveChatHistory(); // Simpan chat setelah balasan dari asisten
@@ -130,6 +127,8 @@
                     return message.replace(/(https?:\/\/[^\s]+)\s+/g, '$1').replace(/\s+(com|org|net|id|co)/g, '$1');
                 },
                 formatMessageContent(content) {
+                    // Mengganti **text** dengan <strong>text</strong> untuk format tebal
+                    content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                     return content.replace(/\n/g, '<br>').replace(/(\d\.\s)/g, '<ul><li>$1</li></ul>');
                 },
                 copyToClipboard(content) {
@@ -181,7 +180,7 @@
             const response = await hf.chatCompletion({
                 model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
                 messages: messages,
-                max_tokens: 5000, // Meningkatkan jumlah token
+                max_tokens: 5000,
                 temperature: 0.3,
                 seed: 0,
             });
