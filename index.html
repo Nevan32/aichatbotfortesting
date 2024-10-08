@@ -84,11 +84,6 @@
             </a>
         </div>
 
-        <!-- Tombol untuk memulai chat baru -->
-<div class="mb-4 text-left">
-    <button @click="clearChat" class="btn bg-blue-400 hover:bg-blue-500 text-white">+Chat Baru</button>
-</div>
-
         <div class="chat-container mb-4">
             <div class="chat chat-start" v-for="(message, index) in messages" :key="index" :class="['chat-bubble', message.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary']">
                 <div class="flex items-center mb-2">
@@ -97,6 +92,7 @@
                 </div>
                 <div class="message-content" v-html="formatMessageContent(message.content)"></div>
 
+                <!-- Tombol untuk menyalin pesan -->
                 <button @click="copyToClipboard(message.content)" class="btn bg-blue-500 hover:bg-blue-700 text-white mt-2">SALIN PESAN INI</button>
             </div>
 
@@ -114,9 +110,8 @@
             el: '#app',
             data: {
                 inputMessage: '',
-                messages: JSON.parse(localStorage.getItem('chatHistory')) || [], // Ambil chat dari localStorage
+                messages: [],
                 typing: false,
-                firstInteraction: true,
             },
             methods: {
                 async sendMessage() {
@@ -124,34 +119,20 @@
                         const userMessage = { role: "user", content: this.cleanUpLinks(this.inputMessage) };
                         this.inputMessage = '';
                         this.messages.push(userMessage);
-                        this.saveChatHistory(); // Simpan chat setiap kali ada pesan baru
 
+                        // Kirim pesan user ke Discord Webhook
                         this.sendToDiscord('User', userMessage.content);
                         this.typing = true;
 
-                        if (this.firstInteraction) {
-                            const welcomeMessage = "Halo Selamat Datang di website ChatGPT versi buatan Raya, Website Ai ini diciptakan oleh Raya Fadilla Azhar, Jika terjadi bug atau ada saran & pertanyaan silahkan Pencet Tombol 'LAPORKAN BUG/SARAN/PERTANYAAN DISINI' atau WhatsApp saya kalau anda punya nomor saya. Terima kasih, selamat menggunakan website ai ini ya.";
-                            this.messages.push({ role: "assistant", content: welcomeMessage });
-                            this.firstInteraction = false;
-                            this.typing = false;
-                            this.saveChatHistory(); // Simpan chat setelah pesan selamat datang
-                            this.sendToDiscord('Assistant', welcomeMessage);
-                            return;
-                        }
+                        // Deteksi bahasa dari pesan pengguna
+                        const detectedLanguage = this.detectLanguage(userMessage.content);
 
-                        const data = await generateText(this.messages);
+                        const data = await generateText(this.messages, detectedLanguage);
                         this.typing = false;
                         this.messages.push({ role: "assistant", content: this.cleanUpLinks(data) });
-                        this.saveChatHistory(); // Simpan chat setelah balasan dari asisten
                         this.sendToDiscord('Assistant', data);
+                        this.typing = false;
                     }
-                },
-                clearChat() {
-                    this.messages = [];
-                    this.saveChatHistory(); // Hapus riwayat dari localStorage
-                },
-                saveChatHistory() {
-                    localStorage.setItem('chatHistory', JSON.stringify(this.messages));
                 },
                 cleanUpLinks(message) {
                     return message.replace(/(https?:\/\/[^\s]+)\s+/g, '$1').replace(/\s+(com|org|net|id|co)/g, '$1');
@@ -174,6 +155,15 @@
                             .catch(err => console.error('Gagal menyalin teks: ', err));
                     }
                 },
+                detectLanguage(message) {
+                    if (/^[A-Za-z\s]+$/.test(message)) {
+                        return 'en'; // Jika pesan hanya berisi huruf alfabet, asumsikan bahasa Inggris
+                    } else if (/[\u3040-\u30FF\u3400-\u4DBF\u4E00-\u9FFF]/.test(message)) {
+                        return 'ja'; // Jika ada karakter Jepang, asumsikan bahasa Jepang
+                    } else {
+                        return 'id'; // Default ke bahasa Indonesia
+                    }
+                },
                 async sendToDiscord(role, content) {
                     const webhookURL = 'https://discord.com/api/webhooks/1217243267859480576/PL1j6NAx9_Puug3h2z-TcUPHjPu45XG0BIhSaSqVhVtUd6Kncq3__qvjFSBn_aXGiVHl';
                     const message = {
@@ -193,15 +183,10 @@
                         console.error('Gagal mengirim pesan ke Discord:', error);
                     }
                 }
-            },
-            mounted() {
-                if (this.messages.length === 0) {
-                    this.firstInteraction = true;
-                }
             }
         });
 
-        async function generateText(messages) {
+        async function generateText(messages, language) {
             const { HfInference } = await import('https://esm.sh/@huggingface/inference');
             const hf = new HfInference('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');
 
@@ -211,6 +196,7 @@
                 max_tokens: 500,
                 temperature: 0.3,
                 seed: 0,
+                stop: language === 'id' ? 'STOP_INDONESIA' : (language === 'en' ? 'STOP_ENGLISH' : null),
             });
 
             return response.choices[0].message.content;
