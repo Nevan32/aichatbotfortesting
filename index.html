@@ -17,6 +17,7 @@
             display: flex;
             flex-direction: column;
         }
+
         .chat-container {
             background: white;
             border-radius: 10px;
@@ -26,36 +27,45 @@
             overflow-y: auto;
             margin-bottom: 20px;
         }
+
         .input-area {
             margin-top: 20px;
         }
+
         .chat-bubble {
             margin-bottom: 10px;
             padding: 10px;
             border-radius: 10px;
         }
+
         .chat-bubble-primary {
             background-color: transparent;
             color: black;
         }
+
         .chat-bubble-secondary {
             background-color: transparent;
             color: black;
         }
+
         .copy-button {
             color: blue;
             text-decoration: none;
             cursor: pointer;
         }
+
         .copy-button:hover {
             text-decoration: underline;
         }
+
         .message-content p {
             margin-bottom: 0.5em;
         }
+
         .message-content ul {
             margin-left: 20px;
         }
+
         .message-role {
             font-weight: bold;
             margin-bottom: 5px;
@@ -72,7 +82,6 @@
             </a>
         </div>
 
-        <!-- Tombol untuk memulai chat baru -->
         <div class="mb-4 text-left">
             <button @click="clearChat" class="btn bg-blue-400 hover:bg-blue-500 text-white">Clear Chat</button>
         </div>
@@ -91,7 +100,6 @@
             <div v-if="typing" class="text-gray-500 italic">assistant sedang mengetik...</div>
         </div>
 
-        <!-- Area input pesan -->
         <div class="input-area flex items-center">
             <input type="text" v-model="inputMessage" @keyup.enter="sendMessage" placeholder="Ketik pesan..." class="input input-bordered w-full mr-2" />
             <button @click="sendMessage" class="btn p-0" style="background: none; border: none;">
@@ -100,7 +108,6 @@
         </div>
     </div>
 
-    <!-- Tambahan paragraf di bawah chatbot -->
     <p class="text-center mt-4">Dibuat oleh Raya Fadilla Azhar</p>
 
     <script type="module">
@@ -108,7 +115,7 @@
             el: '#app',
             data: {
                 inputMessage: '',
-                messages: JSON.parse(localStorage.getItem('chatHistory')) || [], // Ambil chat dari localStorage
+                messages: JSON.parse(localStorage.getItem('chatHistory')) || [], 
                 typing: false,
                 firstInteraction: true,
             },
@@ -118,7 +125,7 @@
                         const userMessage = { role: "user", content: this.cleanUpLinks(this.inputMessage) };
                         this.inputMessage = '';
                         this.messages.push(userMessage);
-                        this.saveChatHistory(); // Simpan chat setiap kali ada pesan baru
+                        this.saveChatHistory();
 
                         this.sendToDiscord('User', userMessage.content);
                         this.typing = true;
@@ -126,15 +133,14 @@
                         const data = await generateText(this.messages);
                         this.typing = false;
                         this.messages.push({ role: "assistant", content: this.cleanUpLinks(data) });
-                        this.saveChatHistory(); // Simpan chat setelah balasan dari asisten
-
+                        this.saveChatHistory();
                         this.sendToDiscord('Assistant', data);
                     }
                 },
 
                 clearChat() {
                     this.messages = [];
-                    this.saveChatHistory(); // Hapus riwayat dari localStorage
+                    this.saveChatHistory(); 
                 },
 
                 saveChatHistory() {
@@ -149,7 +155,9 @@
                     // Mengganti tanda ** di awal dan akhir teks dengan tag <strong> untuk teks tebal
                     content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                     // Mengganti newlines dengan tag <br>
-                    return content.replace(/\n/g, '<br>');
+                    content = content.replace(/\n/g, '<br>');
+                    // Mengganti angka 1., 2., dst. dengan list item
+                    return content.replace(/(\d\.\s)/g, '<ul><li>$1</li></ul>');
                 },
 
                 copyToClipboard(content) {
@@ -188,6 +196,7 @@
                     }
                 }
             },
+
             mounted() {
                 if (this.messages.length === 0) {
                     this.firstInteraction = true;
@@ -200,14 +209,14 @@
             const hf = new HfInference('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');
 
             const response = await hf.chatCompletion({
-                model: "mistralai/Mixtral-8x7B-Instruct",
-                messages: messages.map((msg) => ({
-                    role: msg.role,
-                    content: msg.content,
-                })),
+                model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
+                messages: messages,
+                max_tokens: 500,
+                temperature: 0.3,
+                seed: 0,
             });
 
-            return response.generated_text;
+            return response.choices[0].message.content;
         }
     </script>
 </body>
