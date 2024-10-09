@@ -19,11 +19,6 @@
             flex-direction: column;
         }
 
-        .dark-mode {
-            background-color: #121212;
-            color: #ffffff;
-        }
-
         .chat-container {
             background: white;
             border-radius: 10px;
@@ -79,7 +74,7 @@
     </style>
 </head>
 
-<body :class="{ 'dark-mode': darkMode }">
+<body>
     <div id="app" class="container mx-auto p-4 flex flex-col h-full">
         <h1 class="text-3xl font-bold mb-4 text-center">AI Chatbot Sederhana</h1>
 
@@ -89,11 +84,6 @@
                 <option value="en">English</option>
                 <option value="id">Bahasa Indonesia</option>
             </select>
-        </div>
-
-        <!-- Tombol Mode Gelap -->
-        <div class="text-center mb-4">
-            <button @click="toggleDarkMode" class="btn bg-gray-500 hover:bg-gray-700 text-white">Toggle Dark Mode</button>
         </div>
 
         <div class="text-center mb-4">
@@ -135,7 +125,6 @@
                 inputMessage: '',
                 messages: JSON.parse(localStorage.getItem('chatHistory')) || [], // Ambil chat dari localStorage
                 typing: false,
-                darkMode: false,
                 selectedLanguage: 'en', // Default bahasa
             },
             methods: {
@@ -160,9 +149,6 @@
                 },
                 saveChatHistory() {
                     localStorage.setItem('chatHistory', JSON.stringify(this.messages));
-                },
-                toggleDarkMode() {
-                    this.darkMode = !this.darkMode;
                 },
                 cleanUpLinks(message) {
                     return message.replace(/(https?:\/\/[^\s]+)\s+/g, '$1').replace(/\s+(com|org|net|id|co)/g, '$1');
@@ -197,13 +183,14 @@
             const { HfInference } = await import('https://esm.sh/@huggingface/inference');
             const hf = new HfInference('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');
 
+            const model = language === 'id' ? "mistralai/Mixtral-8x7B-Instruct-v0.1-id" : "mistralai/Mixtral-8x7B-Instruct-v0.1"; // Pilih model sesuai bahasa
+
             const response = await hf.chatCompletion({
-                model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
+                model: model,
                 messages: messages,
                 max_tokens: 500,
                 temperature: 0.3,
                 seed: 0,
-                language: language // Gunakan bahasa yang dipilih
             });
 
             return response.choices[0].message.content;
