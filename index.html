@@ -1,5 +1,6 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -48,22 +49,8 @@
             color: black;
         }
 
-        .copy-button {
-            color: blue;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .copy-button:hover {
-            text-decoration: underline;
-        }
-
         .message-content p {
             margin-bottom: 0.5em;
-        }
-
-        .message-content ul {
-            margin-left: 20px;
         }
 
         .message-role {
@@ -71,10 +58,11 @@
             margin-bottom: 5px;
         }
 
-        /* Typing animation for the assistant messages */
+        /* Typing effect */
         .typing-effect {
             display: inline-block;
-            white-space: pre;
+            white-space: pre-wrap;
+            word-wrap: break-word;
             border-right: 2px solid;
             animation: caret 0.5s steps(1) infinite;
         }
@@ -86,6 +74,7 @@
         }
     </style>
 </head>
+
 <body>
     <div id="app" class="container mx-auto p-4 flex flex-col h-full">
         <h1 class="text-3xl font-bold mb-4 text-center">AI Chatbot Sederhana</h1>
@@ -101,25 +90,26 @@
         </div>
 
         <div class="chat-container mb-4">
-            <div class="chat chat-start" v-for="(message, index) in messages" :key="index" :class="['chat-bubble', message.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary']">
+            <div class="chat chat-start" v-for="(message, index) in messages" :key="index"
+                :class="['chat-bubble', message.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary']">
                 <div class="flex items-center mb-2">
-                    <img :src="message.role === 'user' ? 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png' : 'https://upload.wikimedia.org/wikipedia/commons/e/ef/ChatGPT-Logo.svg'" alt="User or Assistant Icon" class="w-8 h-8 mr-2">
+                    <img :src="message.role === 'user' ? 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png' : 'https://upload.wikimedia.org/wikipedia/commons/e/ef/ChatGPT-Logo.svg'"
+                        alt="User or Assistant Icon" class="w-8 h-8 mr-2">
                     <div class="message-role">{{ message.role === 'user' ? 'User' : 'Assistant' }}</div>
                 </div>
-                <div class="message-content">
-                    <!-- If the message is from the assistant, we use the typing effect -->
-                    <span v-if="message.role === 'assistant' && typingMessage === index" class="typing-effect">{{ messageDisplay }}</span>
-                    <span v-else v-html="formatMessageContent(message.content)"></span>
-                </div>
-                <button @click="copyToClipboard(message.content)" class="btn bg-blue-500 hover:bg-blue-700 text-white mt-2">SALIN PESAN INI</button>
+                <div class="message-content" v-if="message.role !== 'typing'">{{ message.content }}</div>
+                <div v-else class="message-content typing-effect">{{ messageDisplay }}</div>
             </div>
+
             <div v-if="typing" class="text-gray-500 italic">assistant sedang mengetik...</div>
         </div>
 
         <div class="input-area flex items-center">
-            <input type="text" v-model="inputMessage" @keyup.enter="sendMessage" placeholder="Ketik pesan..." class="input input-bordered w-full mr-2" />
+            <input type="text" v-model="inputMessage" @keyup.enter="sendMessage" placeholder="Ketik pesan..."
+                class="input input-bordered w-full mr-2" />
             <button @click="sendMessage" class="btn p-0" style="background: none; border: none;">
-                <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhTi6NNzaNW2TmRd3yJfsqPnq_79qZpPX7oYZrtoM3NxXlcbbY7cBPjmXxpYbSMKfkDq1oFrfL-QdN6OqL_XermC91jdTpUHgTMjL9O3lOF0yXlksrl2mhdFxqe0hbwgH2bfVfwg0Ae9HEQ6ebfdaukrLKXUyKuhyT0XZPjrG8X6-dRQDhhwY1D_q5qTjk/s512/60525.png" alt="Send" class="w-10 h-10" />
+                <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhTi6NNzaNW2TmRd3yJfsqPnq_79qZpPX7oYZrtoM3NxXlcbbY7cBPjmXxpYbSMKfkDq1oFrfL-QdN6OqL_XermC91jdTpUHgTMjL9O3lOF0yXlksrl2mhdFxqe0hbwgH2bfVfwg0Ae9HEQ6ebfdaukrLKXUyKuhyT0XZPjrG8X6-dRQDhhwY1D_q5qTjk/s512/60525.png"
+                    alt="Send" class="w-10 h-10" />
             </button>
         </div>
     </div>
@@ -133,8 +123,8 @@
                 inputMessage: '',
                 messages: JSON.parse(localStorage.getItem('chatHistory')) || [],
                 typing: false,
-                typingMessage: null, // Index of the message currently typing
-                messageDisplay: '', // The content to be typed out
+                firstInteraction: true,
+                messageDisplay: '', // for typing effect
             },
             methods: {
                 async sendMessage() {
@@ -145,24 +135,18 @@
                         this.saveChatHistory();
 
                         this.sendToDiscord('User', userMessage.content);
-
                         this.typing = true;
+
                         const data = await generateText(this.messages);
+
                         this.typing = false;
-
-                        const assistantMessage = { role: "assistant", content: this.cleanUpLinks(data) };
-                        this.messages.push(assistantMessage);
-                        this.saveChatHistory();
-                        this.sendToDiscord('Assistant', data);
-
-                        // Start typing animation for the assistant's response
-                        this.typingMessage = this.messages.length - 1;
-                        this.typingEffect(assistantMessage.content);
+                        this.messages.push({ role: "typing", content: data }); // start typing effect
+                        this.typingEffect(data);
                     }
                 },
                 clearChat() {
                     this.messages = [];
-                    this.saveChatHistory(); 
+                    this.saveChatHistory();
                 },
                 saveChatHistory() {
                     localStorage.setItem('chatHistory', JSON.stringify(this.messages));
@@ -170,25 +154,19 @@
                 cleanUpLinks(message) {
                     return message.replace(/(https?:\/\/[^\s]+)\s+/g, '$1').replace(/\s+(com|org|net|id|co)/g, '$1');
                 },
-                formatMessageContent(content) {
-                    content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                    content = content.replace(/\n/g, '<br>');
-                    return content.replace(/(\d\.\s)/g, '<ul><li>$1</li></ul>');
-                },
-                copyToClipboard(content) {
-                    if (!navigator.clipboard) {
-                        const el = document.createElement('textarea');
-                        el.value = content;
-                        document.body.appendChild(el);
-                        el.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(el);
-                        alert('Pesan berhasil disalin menggunakan metode fallback!');
-                    } else {
-                        navigator.clipboard.writeText(content)
-                            .then(() => alert('Pesan berhasil disalin!'))
-                            .catch(err => console.error('Gagal menyalin teks: ', err));
-                    }
+                typingEffect(content) {
+                    this.messageDisplay = '';
+                    let index = 0;
+                    const interval = setInterval(() => {
+                        this.messageDisplay += content[index];
+                        index++;
+                        if (index >= content.length) {
+                            clearInterval(interval);
+                            this.messages.pop();
+                            this.messages.push({ role: "assistant", content: content }); // replace typing effect with full message
+                            this.saveChatHistory();
+                        }
+                    }, 50); // Adjust the speed of typing here (50ms per character)
                 },
                 async sendToDiscord(role, content) {
                     const webhookURL = 'https://discord.com/api/webhooks/1217243267859480576/PL1j6NAx9_Puug3h2z-TcUPHjPu45XG0BIhSaSqVhVtUd6Kncq3__qvjFSBn_aXGiVHl';
@@ -208,18 +186,6 @@
                     } catch (error) {
                         console.error('Gagal mengirim pesan ke Discord:', error);
                     }
-                },
-                typingEffect(content) {
-                    this.messageDisplay = '';
-                    let index = 0;
-                    const interval = setInterval(() => {
-                        this.messageDisplay += content[index];
-                        index++;
-                        if (index >= content.length) {
-                            clearInterval(interval);
-                            this.typingMessage = null; // Stop the typing effect once done
-                        }
-                    }, 50); // Adjust the speed of typing here (50ms per character)
                 }
             },
             mounted() {
