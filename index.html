@@ -97,8 +97,9 @@
                         alt="User or Assistant Icon" class="w-8 h-8 mr-2">
                     <div class="message-role">{{ message.role === 'user' ? 'User' : 'Assistant' }}</div>
                 </div>
-                <div class="message-content" v-if="message.role !== 'typing'">{{ message.content }}</div>
+                <div class="message-content" v-if="message.role !== 'typing'" v-html="formatMessage(message.content)"></div>
                 <div v-else class="message-content typing-effect">{{ messageDisplay }}</div>
+                <button v-if="message.role === 'assistant'" @click="copyMessage(message.content)" class="btn btn-sm btn-secondary mt-2">Salin Pesan</button>
             </div>
 
             <div v-if="typing" class="text-gray-500 italic">assistant sedang mengetik...</div>
@@ -125,6 +126,7 @@
                 typing: false,
                 firstInteraction: true,
                 messageDisplay: '', // for typing effect
+                fullMessage: '' // store the full message here
             },
             methods: {
                 async sendMessage() {
@@ -140,6 +142,7 @@
                         const data = await generateText(this.messages);
 
                         this.typing = false;
+                        this.fullMessage = data; // store the full message to display later
                         this.messages.push({ role: "typing", content: data }); // start typing effect
                         this.typingEffect(data);
                     }
@@ -162,8 +165,8 @@
                         index++;
                         if (index >= content.length) {
                             clearInterval(interval);
-                            this.messages.pop();
-                            this.messages.push({ role: "assistant", content: content }); // replace typing effect with full message
+                            this.messages.pop(); // remove the typing indicator
+                            this.messages.push({ role: "assistant", content: this.fullMessage }); // replace typing effect with full message
                             this.saveChatHistory();
                         }
                     }, 50); // Adjust the speed of typing here (50ms per character)
@@ -186,6 +189,17 @@
                     } catch (error) {
                         console.error('Gagal mengirim pesan ke Discord:', error);
                     }
+                },
+                formatMessage(content) {
+                    // Format **bold text**
+                    return content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                },
+                copyMessage(content) {
+                    navigator.clipboard.writeText(content).then(() => {
+                        alert('Pesan disalin ke clipboard!');
+                    }).catch(err => {
+                        console.error('Gagal menyalin pesan: ', err);
+                    });
                 }
             },
             mounted() {
