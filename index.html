@@ -307,8 +307,14 @@
 
                     // Mengganti tanda ** di awal dan akhir teks dengan tag <strong> untuk teks tebal
                     content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    
                     // Mengganti newlines dengan tag <br>
                     content = content.replace(/\n/g, '<br>');
+                    
+                    // Mengubah URL menjadi tag <a> hyperlink
+                    const urlRegex = /(https?:\/\/[^\s]+)/g;
+                    content = content.replace(urlRegex, '<a href="$1" target="_blank" style="color: blue; text-decoration: underline;">$1</a>');
+                    
                     // Mengganti angka 1., 2., dst. dengan list item
                     return content.replace(/(\d\.\s)/g, '<ul><li>$1</li></ul>');
                 },
