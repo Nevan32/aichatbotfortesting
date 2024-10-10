@@ -151,9 +151,10 @@
                 },
 
                 cleanUpLinks(message) {
-                    // Pastikan tidak ada encoding karakter aneh dalam link
-                    return message.replace(/%3E|%3C|%3A/g, '')
-                                  .replace(/\(\)|\)\s*<br>|<br>|[*]/g, ''); // Buang karakter tak diinginkan di URL
+                    // Menghapus karakter encoding yang tidak diinginkan
+                    return message.replace(/%3E|%3C|%3A/g, '') // Hapus karakter %3E, %3C, %3A
+                                  .replace(/(\s*<br>|<br>|\)|\*\))/g, '') // Hapus <br>, spasi di akhir, dan tanda kurung
+                                  .replace(/\s+On$/g, ''); // Hapus 'On' di akhir string jika ada
                 },
 
                 formatMessageContent(content) {
