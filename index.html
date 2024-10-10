@@ -43,21 +43,9 @@
             color: black;
         }
 
-        @keyframes slideInLeft {
-            from {
-                transform: translateX(-100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
         .chat-bubble-secondary {
             background-color: transparent;
             color: black;
-            animation: slideInLeft 0.5s ease-out;
         }
 
         .copy-button {
@@ -82,6 +70,20 @@
             font-weight: bold;
             margin-bottom: 5px;
         }
+
+        /* Typing animation for the assistant messages */
+        .typing-effect {
+            display: inline-block;
+            white-space: pre;
+            border-right: 2px solid;
+            animation: caret 0.5s steps(1) infinite;
+        }
+
+        @keyframes caret {
+            50% {
+                border-color: transparent;
+            }
+        }
     </style>
 </head>
 <body>
@@ -104,7 +106,11 @@
                     <img :src="message.role === 'user' ? 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png' : 'https://upload.wikimedia.org/wikipedia/commons/e/ef/ChatGPT-Logo.svg'" alt="User or Assistant Icon" class="w-8 h-8 mr-2">
                     <div class="message-role">{{ message.role === 'user' ? 'User' : 'Assistant' }}</div>
                 </div>
-                <div class="message-content" v-html="formatMessageContent(message.content)"></div>
+                <div class="message-content">
+                    <!-- If the message is from the assistant, we use the typing effect -->
+                    <span v-if="message.role === 'assistant' && typingMessage === index" class="typing-effect">{{ messageDisplay }}</span>
+                    <span v-else v-html="formatMessageContent(message.content)"></span>
+                </div>
                 <button @click="copyToClipboard(message.content)" class="btn bg-blue-500 hover:bg-blue-700 text-white mt-2">SALIN PESAN INI</button>
             </div>
             <div v-if="typing" class="text-gray-500 italic">assistant sedang mengetik...</div>
@@ -127,7 +133,8 @@
                 inputMessage: '',
                 messages: JSON.parse(localStorage.getItem('chatHistory')) || [],
                 typing: false,
-                firstInteraction: true,
+                typingMessage: null, // Index of the message currently typing
+                messageDisplay: '', // The content to be typed out
             },
             methods: {
                 async sendMessage() {
@@ -143,9 +150,14 @@
                         const data = await generateText(this.messages);
                         this.typing = false;
 
-                        this.messages.push({ role: "assistant", content: this.cleanUpLinks(data) });
+                        const assistantMessage = { role: "assistant", content: this.cleanUpLinks(data) };
+                        this.messages.push(assistantMessage);
                         this.saveChatHistory();
                         this.sendToDiscord('Assistant', data);
+
+                        // Start typing animation for the assistant's response
+                        this.typingMessage = this.messages.length - 1;
+                        this.typingEffect(assistantMessage.content);
                     }
                 },
                 clearChat() {
@@ -196,6 +208,18 @@
                     } catch (error) {
                         console.error('Gagal mengirim pesan ke Discord:', error);
                     }
+                },
+                typingEffect(content) {
+                    this.messageDisplay = '';
+                    let index = 0;
+                    const interval = setInterval(() => {
+                        this.messageDisplay += content[index];
+                        index++;
+                        if (index >= content.length) {
+                            clearInterval(interval);
+                            this.typingMessage = null; // Stop the typing effect once done
+                        }
+                    }, 50); // Adjust the speed of typing here (50ms per character)
                 }
             },
             mounted() {
@@ -208,6 +232,7 @@
         async function generateText(messages) {
             const { HfInference } = await import('https://esm.sh/@huggingface/inference');
             const hf = new HfInference('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');
+
             const response = await hf.chatCompletion({
                 model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
                 messages: messages,
@@ -215,6 +240,7 @@
                 temperature: 0.3,
                 seed: 0,
             });
+
             return response.choices[0].message.content;
         }
     </script>
