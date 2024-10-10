@@ -161,7 +161,14 @@
                     this.messageDisplay = '';
                     let index = 0;
                     const interval = setInterval(() => {
-                        this.messageDisplay += content[index];
+                        // Handle newlines and multiple spaces
+                        if (content[index] === '\n') {
+                            this.messageDisplay += '<br>';
+                        } else if (content[index] === ' ') {
+                            this.messageDisplay += '&nbsp;';
+                        } else {
+                            this.messageDisplay += content[index];
+                        }
                         index++;
                         if (index >= content.length) {
                             clearInterval(interval);
@@ -191,8 +198,11 @@
                     }
                 },
                 formatMessage(content) {
-                    // Format **bold text**
-                    return content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    // Replace newline characters and multiple spaces
+                    return content
+                        .replace(/\n/g, '<br>')    // Convert newline to <br>
+                        .replace(/ {2}/g, '&nbsp;&nbsp;')  // Convert double spaces to non-breaking spaces
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); // Handle bold formatting
                 },
                 copyMessage(content) {
                     navigator.clipboard.writeText(content).then(() => {
@@ -201,28 +211,33 @@
                         console.error('Gagal menyalin pesan: ', err);
                     });
                 }
-            },
-            mounted() {
-                if (this.messages.length === 0) {
-                    this.firstInteraction = true;
-                }
             }
         });
 
         async function generateText(messages) {
-            const { HfInference } = await import('https://esm.sh/@huggingface/inference');
-            const hf = new HfInference('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');
+            const apiKey = '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';
+            const apiURL = 'https://api-inference.huggingface.co/models/declare-lab/flan-alpaca-large';
 
-            const response = await hf.chatCompletion({
-                model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
-                messages: messages,
-                max_tokens: 500,
-                temperature: 0.3,
-                seed: 0,
+            const requestMessages = messages.map((msg) => ({
+                role: msg.role,
+                content: msg.content,
+            }));
+
+            const response = await fetch(apiURL, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    inputs: requestMessages.map((msg) => `${msg.role}: ${msg.content}`).join('\n\n'),
+                }),
             });
 
-            return response.choices[0].message.content;
+            const result = await response.json();
+            return result.generated_text.trim();
         }
     </script>
 </body>
+
 </html>
