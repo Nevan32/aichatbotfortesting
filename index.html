@@ -59,6 +59,32 @@
             font-weight: bold;
             margin-bottom: 5px;
         }
+        /* Animasi untuk tulisan berkedip */
+        .typing-indicator {
+            display: inline-flex;
+            gap: 4px;
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            background-color: #6b7280; /* warna abu-abu */
+            border-radius: 50%;
+            animation: blink 1s infinite alternate;
+        }
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        @keyframes blink {
+            0% {
+                opacity: 0.2;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body>
@@ -81,7 +107,12 @@
                 <div class="message-content" v-html="formatMessageContent(message.content)"></div>
                 <button @click="copyToClipboard(message.content)" class="btn bg-blue-500 hover:bg-blue-700 text-white mt-2">SALIN PESAN INI</button>
             </div>
-            <div v-if="typing" class="text-gray-500 italic">assistant sedang mengetik...</div>
+            <div v-if="typing" class="text-gray-500 italic typing-indicator">
+                assistant sedang mengetik
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
         </div>
         <div class="input-area flex items-center">
             <input type="text" v-model="inputMessage" @keyup.enter="sendMessage" placeholder="Ketik pesan..." class="input input-bordered w-full mr-2" />
@@ -148,16 +179,11 @@
                 },
                 async sendToDiscord(role, content) {
                     const webhookURL = 'https://discord.com/api/webhooks/1217243267859480576/PL1j6NAx9_Puug3h2z-TcUPHjPu45XG0BIhSaSqVhVtUd6Kncq3__qvjFSBn_aXGiVHl';
-                    const message = {
-                        username: role,
-                        content: content,
-                    };
+                    const message = { username: role, content: content };
                     try {
                         await fetch(webhookURL, {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(message),
                         });
                         console.log('Pesan terkirim ke Discord');
@@ -172,22 +198,16 @@
                 }
             }
         });
-
         async function generateText(messages) {
             const { HfInference } = await import('https://esm.sh/@huggingface/inference');
             const hf = new HfInference('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');
-
-            // Tambahkan instruksi tak terlihat untuk berbicara bahasa Indonesia
-            const modMessages = [...messages, { role: "system", content: "Berbicaralah bahasa Indonesia" }];
-
             const response = await hf.chatCompletion({
                 model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
-                messages: modMessages,
+                messages: messages,
                 max_tokens: 500,
                 temperature: 0.3,
                 seed: 0,
             });
-
             return response.choices[0].message.content;
         }
     </script>
